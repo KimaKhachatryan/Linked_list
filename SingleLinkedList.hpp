@@ -1,4 +1,4 @@
-//default constructor for List class
+///default constructor for List class
 template <typename T> 
 List<T>::List()
 {
@@ -30,6 +30,10 @@ List<T>::Node::Node(T value)
 	next = nullptr;
 }
 
+/////////////////////////////////////////////////////////////
+////////////////--CAPACITY--/////////////////////////////////
+
+
 //returns List size
 template <typename T>
 size_t List<T>::size()
@@ -43,6 +47,58 @@ bool List<T>::empty()
 {
 	return this->m_size;
 }
+
+/////////////////////////////////////////////////////////////
+////////////////--MODIFIERS--////////////////////////////////
+
+//changes List size(default fills with 0)
+template <typename T>
+void List<T>::resize(size_t new_size, T value)
+{
+	if (!new_size) {
+		this->clear();
+	} else if (new_size == this->m_size) {
+		return;
+	} 
+
+	if (new_size > this->m_size) {
+		if (!head) {
+			head = new Node (value);
+			Node* tmp = head;
+
+			for (size_t i = 1; i < new_size; ++i) {
+				tmp->next = new Node (value);
+				tmp = tmp->next;
+			}
+		} else {
+			Node* tmp = head;
+			for (size_t i = 1; i < this->m_size; ++i) {
+				tmp = tmp->next;		
+			}
+
+			for (size_t i = 1; i < new_size; ++i) {
+				tmp->next = new Node (value);
+				tmp = tmp->next;
+			}
+		}
+	} else {
+		Node* tmp = head;
+
+		for (size_t i = 1; i < new_size; ++i) {
+			tmp = tmp->next;
+		}
+ 
+		Node* erasable = nullptr;
+		for (size_t i = new_size; i < this->m_size; ++i) {
+			erasable = tmp->next;
+			tmp->next = erasable->next;
+			delete erasable;
+		}
+	}
+
+	this->m_size = new_size;
+}
+
 
 //clears the contents
 template <typename T>
@@ -139,7 +195,7 @@ void List<T>::pop_front()
 	}
 }
 
-//inserts the element at the given position
+//inserts the element (or elements) at the given position
 template <typename T>
 void List<T>::insert(size_t position, T value) 
 {
@@ -170,6 +226,149 @@ void List<T>::insert(size_t position, T value)
 
 	++this->m_size;
 }
+
+template <typename T>
+void List<T>::insert(size_t position, size_t count, T value) 
+{
+	if (count == 0) {
+		return;
+	} 
+
+	if (!head) {
+		if (!position) {
+			head = new Node (value);
+			Node* tmp = head;
+
+			for (size_t i = 1; i < count; ++i) {
+				tmp->next = new Node(value);
+				tmp = tmp->next;	
+			}
+		} else {
+			std::cout << "Segmentation fault" << std::endl;
+			exit(0);
+		}
+	} else if (position >= this->m_size) {
+		std::cout << "Segmentation fault" << std::endl;
+		exit(0);
+	} else if (position == 0) {
+		Node* right = head;
+		head = new Node (value);
+		Node* left = head;
+
+		for (size_t i = 1; i < count; ++i) {
+			left->next = new Node (value);
+			left = left->next;
+		}
+
+		left->next = right;
+	} else {
+		Node* right = head;
+		Node* left = nullptr;
+
+		for (size_t i = 1; i < position; ++i) {
+			right = right->next;
+		}
+
+		left = right->next;
+
+		for (size_t i = 0; i < count; ++i) {
+			right->next = new Node (value);
+			right = right->next;
+		}
+
+		right->next = left;
+	}
+
+	this->m_size += count;
+}
+//erases the element at the given position
+template <typename T>
+void List<T>::erase(size_t position) 
+{
+	if (!head) {
+		std::cout << "Out of range" << std::endl;
+		exit(0);
+	} else if (position >= this->m_size) {
+		std::cout << "Segmentation fault" << std::endl;
+		exit(0);
+	} else if (position == 0) {
+		this->pop_front();
+	} else if (position == this->m_size - 1) {
+		this->pop_back();
+	} else {
+		Node* tmp = head;
+		for (size_t i = 1; i < position; ++i) {
+			tmp = tmp->next;	
+		}
+	
+		Node* deleted = tmp->next;
+		tmp->next = deleted->next;
+		delete deleted;
+	}
+
+	--this->m_size;
+}
+
+template <typename T>
+void List<T>::erase(size_t first, size_t last)
+{
+	if (!head) {
+		std::cout << "Segmentation fault" << std::endl;
+		exit(0);
+	} else if (first > last || first >= this->m_size || last >= this->m_size) {	
+		std::cout << "Out of range" << std::endl;
+		exit(0);
+	} else if (first == 0 && last == this->m_size - 1) {
+		this->clear();
+	} else if (first == last) {
+		this->erase(first);
+	}
+
+	if (first == 0) {
+		Node* tmp = nullptr;
+		for(size_t i = first; i <= last; ++i) {
+			tmp = head->next;
+			delete head;
+			head = tmp;
+		}
+	} else {
+		Node* left = head;
+		for(size_t i = 1; i < first; ++i) {
+			left = left->next;
+		}
+
+		Node* erasable = left->next;
+		Node* right = nullptr;
+
+		for(size_t i = first; i <= last; ++i) {
+			right = erasable->next;
+			delete erasable;
+			erasable = right;
+		}
+
+		if (last == this->m_size - 1) {
+			left->next = nullptr;
+		} else {
+			left->next = right;
+		}
+	}
+
+	this->m_size -= last - first + 1;
+}
+
+//swaps the contents of 2 list
+template<typename T>
+void List<T>::swap(List<T>& other)
+{
+	if (this->head != other.head) {
+		std::swap(this->head, other.head);
+		std::swap(this->m_size, other.m_size);
+	}
+}
+
+/////////////////////////////////////////////////////////////
+//////////////////--ACCESS--/////////////////////////////////
+
 //access to the first element
 template <typename T>
 T& List<T>::front()
@@ -198,3 +397,108 @@ T& List<T>::back()
 	
 	return tmp->m_value;
 }
+
+/////////////////////////////////////////////////////////////
+//////////////////--OPERATIONS--/////////////////////////////
+
+//moves elements from another list
+template <typename T>
+void List<T>::splice(size_t position, List<T>& other)
+{
+	if (!head) {
+		if (!position) {
+			head = other.head;
+		} else {
+			std::cout << "Segmentation fault" << std::endl;
+			exit(0);
+		}
+	} else if (position >= this->m_size) {
+		std::cout << "Out of range" << std::endl;
+		exit(0);
+	}else if (position == 0) {
+		Node* tmp = other.head;
+		for (size_t i = 1; i < other.m_size; ++i) {
+			other.head = other.head->next;
+		}
+
+		other.head->next = this->head;
+		this->head = tmp;
+	} else {
+		Node* left = this->head;
+		Node* right = nullptr;
+
+		for (size_t i = 1; i < position; ++i) {
+			left = left->next;
+		}
+
+		right = left->next;
+		left->next = other.head;
+
+		for (size_t i = 1; i < other.m_size; ++i) {
+			other.head = other.head->next;
+		}
+
+		other.head->next = right;
+	}
+
+	this->m_size += other.m_size;
+	other.head = nullptr;
+	other.m_size = 0; 
+}
+
+//reverses the order of the elements in the container
+template <typename T>
+void List<T>::reverse()
+{
+	if (this->m_size < 2) {
+		return;
+	}
+
+	Node* tmp = nullptr;
+
+	tmp = head;
+	head = head->next;
+	Node* next_node = head->next;
+	head->next = tmp;	
+	tmp->next = nullptr;
+
+	for (size_t i = 2; i < this->m_size; ++i) {
+		tmp = head;
+		head = next_node;
+		next_node = head->next;
+		head->next = tmp;	
+	}
+}
+
+//removes all consecutive duplicate elements from the container
+template <typename T>
+void List<T>::unique()
+{
+	if (this->m_size < 2) {
+		return;
+	}
+
+	Node* u_ptr = head;
+	Node* tmp = head->next;
+	T unique = head->m_value;
+
+	while (tmp->next) {
+		if (tmp->m_value == unique) {
+			u_ptr->next = tmp->next;
+			delete tmp;
+			--this->m_size;
+		} else {
+			unique = tmp->m_value;
+			u_ptr = tmp;
+		}
+
+		tmp = u_ptr->next;
+	}
+
+	if (tmp->m_value == unique) {
+		delete tmp;
+		u_ptr = nullptr;
+		--this->m_size;
+	}
+}
+
